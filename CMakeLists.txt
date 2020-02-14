@@ -5,12 +5,11 @@ set(CMAKE_DEBUG_POSTFIX d)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 find_package(OpenMP)
+find_package(Eigen3 3.3.7 REQUIRED)
 if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
-
-set(EIGEN_INCLUDE_DIR "" CACHE PATH "The path to the eigen include directory")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
@@ -22,14 +21,14 @@ target_include_directories(FMMPotential PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 	$<INSTALL_INTERFACE:include>
 )
-target_include_directories(FMMPotential PUBLIC ${EIGEN_INCLUDE_DIR})
+target_include_directories(FMMPotential PUBLIC ${EIGEN3_INCLUDE_DIR})
 
 target_include_directories(libFMMPotential PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 	$<INSTALL_INTERFACE:include>
 )
-target_include_directories(libFMMPotential PUBLIC ${EIGEN_INCLUDE_DIR})
+target_include_directories(libFMMPotential PUBLIC ${EIGEN3_INCLUDE_DIR})
 
 set(CLANG_LIBOMP "CLANG_LIBOMP-NOTFOUND" CACHE FILEPATH "Path the clang libomp.lib")
 target_link_libraries(FMMPotential ${CLANG_LIBOMP})
