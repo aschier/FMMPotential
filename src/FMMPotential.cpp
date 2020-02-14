@@ -58,9 +58,9 @@ namespace FMMPotential {
 		// Split the charge of a triangle into point charges at gauss quadrature points.
 		// TODO: maybe this should be abstracted in some function in quadrature.h
 		for(size_t t_idx = 0; t_idx < triangles.size(); t_idx++) {
-			const valarray<double> &a = vertices[triangles[t_idx].p1];
-			const valarray<double> &b = vertices[triangles[t_idx].p2];
-			const valarray<double> &c = vertices[triangles[t_idx].p3];
+			const valarray<double> &a = vertices[triangles[t_idx][0]];
+			const valarray<double> &b = vertices[triangles[t_idx][1]];
+			const valarray<double> &c = vertices[triangles[t_idx][2]];
 			for(short i = 0; i < quad_rule.num_points; i++) {
 				for(short j = 0; j < 3; j++) {
 					charge_points(t_idx * quad_rule.num_points + i, j) = quad_rule.points[i][0] * a[j] + quad_rule.points[i][1] * b[j] + (1.0 - (quad_rule.points[i][0] + quad_rule.points[i][1])) * c[j];

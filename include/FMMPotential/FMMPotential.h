@@ -2,25 +2,13 @@
 
 #include <vector>
 #include <valarray>
+#include <array>
 #include <memory>
 #include <Eigen/Eigen>
 
 namespace FMMPotential {
 	typedef unsigned int uint;
-	struct Triangle {
-		size_t p1, p2, p3;
-		size_t operator[](int i) const {
-			if(i == 0) {
-				return p1;
-			} else if(i == 1) {
-				return p2;
-			} else if(i==2) {
-				return p3;
-			}
-			assert(false);
-			return 0;
-		}
-	};
+	typedef std::array<size_t, 3> Triangle;
 
 	typedef std::vector<std::valarray<double>> VVertices;
 	typedef std::vector<Triangle> VTriangles;
