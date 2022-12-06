@@ -6,6 +6,8 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 find_package(OpenMP)
 find_package(Eigen3 3.3.7 REQUIRED)
+find_package(MishMesh)
+
 if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
@@ -33,6 +35,13 @@ target_include_directories(libFMMPotential PUBLIC ${EIGEN3_INCLUDE_DIR})
 set(CLANG_LIBOMP "CLANG_LIBOMP-NOTFOUND" CACHE FILEPATH "Path the clang libomp.lib")
 target_link_libraries(FMMPotential ${CLANG_LIBOMP})
 target_link_libraries(libFMMPotential ${CLANG_LIBOMP})
+
+if(TARGET MishMesh)
+target_link_libraries(FMMPotential MishMesh)
+target_link_libraries(libFMMPotential MishMesh)
+target_compile_definitions(FMMPotential PUBLIC WITH_MISHMESH)
+target_compile_definitions(libFMMPotential PUBLIC WITH_MISHMESH)
+endif(TARGET MishMesh)
 
 
 set(HEADER_DIRS ${CMAKE_CURRENT_BINARY_DIR}/include)

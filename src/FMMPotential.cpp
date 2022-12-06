@@ -17,6 +17,11 @@
 #include "quadrature.hpp"
 #include "FMMPotential_impl.h"
 
+#ifdef WITH_MISHMESH
+#include <MishMesh/macros.h>
+#include <MishMesh/utils.h>
+#endif
+
 #ifndef _OPENMP
 Breaks on purpose. Your openmp is not working.
 #endif
@@ -104,6 +109,28 @@ namespace FMMPotential {
 		}
 		init(charge_points, point_charges, theta, P, ncrit);
 	}
+
+#ifdef WITH_MISHMESH
+	FMMPotential::impl::impl(const MishMesh::TriMesh & mesh, const Eigen::VectorXd & charges, double theta, uint P, uint ncrit, uint quad_degree) {
+		rule quad_rule = get_quad_rule(quad_degree);
+
+		Eigen::MatrixX3d charge_points(quad_rule.num_points * mesh.n_faces(), 3);
+		Eigen::VectorXd point_charges(quad_rule.num_points * mesh.n_faces());
+		// Split the charge of a triangle into point charges at gauss quadrature points.
+		for(int t_idx = 0; t_idx < mesh.n_faces(); t_idx++) {
+			auto fh = mesh.face_handle(t_idx);
+			auto points = MishMesh::face_points(mesh, fh);
+			for(short i = 0; i < quad_rule.num_points; i++) {
+				for(short j = 0; j < 3; j++) {
+					charge_points(t_idx * quad_rule.num_points + i, j) = quad_rule.points[i][0] * points[0][j] + quad_rule.points[i][1] * points[1][j] + (1.0 - (quad_rule.points[i][0] + quad_rule.points[i][1])) * points[2][j];
+				}
+				// 2 because of the transformation between reference triangle and actual triangle, see quadrature.h
+				point_charges[t_idx * quad_rule.num_points + i] = charges[t_idx] * quad_rule.weights[i] * 2;
+			}
+		}
+		init(charge_points, point_charges, theta, P, ncrit);
+	}
+#endif
 
 	/**
 	 * Evaluate the potential of the charged bodies in the instance on the given particles.
@@ -200,6 +227,11 @@ namespace FMMPotential {
 	FMMPotential::FMMPotential(const std::vector<std::vector<std::valarray<double>>>&triangle_points, const Eigen::VectorXd &charges, double theta, uint P, uint ncrit, uint quad_degree) {
 		pImpl = std::make_unique<FMMPotential::impl>(triangle_points, charges, theta, P, ncrit, quad_degree);
 	}
+#ifdef WITH_MISHMESH
+	FMMPotential::FMMPotential(const MishMesh::TriMesh & mesh, const Eigen::VectorXd & charges, double theta, uint P, uint ncrit, uint quad_degree) {
+		pImpl = std::make_unique<FMMPotential::impl>(mesh, charges, theta, P, ncrit, quad_degree);
+	}
+#endif
 	FMMPotential::~FMMPotential() = default;
 
 	void FMMPotential::evaluateField(Eigen::MatrixX3d &field, const Eigen::MatrixX3d &particles) {
