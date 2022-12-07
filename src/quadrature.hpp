@@ -11,9 +11,9 @@ struct rule {
 };
 
 const static double rule2_points[3][2] = {
-	{1./3, 1./3},
-	{1./3, 1./6},
-	{1./6, 1./3}
+	{1./6, 1./6},
+	{2./6, 1./6},
+	{1./6, 2./6}
 };
 const static double rule2_weights[3] = {1./3, 1./3, 1./3};
 const static rule rule2{3, rule2_points, rule2_weights};
