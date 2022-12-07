@@ -20,6 +20,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 add_library(FMMPotential SHARED src/FMMPotential.cpp src/FMMPotential_impl.h src/quadrature.hpp include/FMMPotential/FMMPotential.h)
 add_library(libFMMPotential STATIC src/FMMPotential.cpp src/FMMPotential_impl.h src/quadrature.hpp include/FMMPotential/FMMPotential.h)
 
+option(OM_STATIC_BUILD "Turn on when using a static OpenMesh libary" ON)
+if(${OM_STATIC_BUILD})
+	target_compile_definitions(FMMPotential PUBLIC -DOM_STATIC_BUILD)
+	target_compile_definitions(libFMMPotential PUBLIC -DOM_STATIC_BUILD)
+endif()
+
 target_include_directories(FMMPotential PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -35,15 +41,15 @@ target_link_libraries(FMMPotential OpenMeshCore Eigen3::Eigen)
 
 set(CLANG_LIBOMP "CLANG_LIBOMP-NOTFOUND" CACHE FILEPATH "Path the clang libomp.lib")
 if(${CLANG_LIBOMP})
-    target_link_libraries(FMMPotential ${CLANG_LIBOMP})
-    target_link_libraries(libFMMPotential ${CLANG_LIBOMP})
+	target_link_libraries(FMMPotential ${CLANG_LIBOMP})
+	target_link_libraries(libFMMPotential ${CLANG_LIBOMP})
 endif()
 
 if(TARGET MishMesh)
-        target_link_libraries(FMMPotential MishMesh)
-        target_link_libraries(libFMMPotential MishMesh)
-        target_compile_definitions(FMMPotential PUBLIC WITH_MISHMESH)
-        target_compile_definitions(libFMMPotential PUBLIC WITH_MISHMESH)
+	target_link_libraries(FMMPotential MishMesh)
+	target_link_libraries(libFMMPotential MishMesh)
+	target_compile_definitions(FMMPotential PUBLIC WITH_MISHMESH)
+	target_compile_definitions(libFMMPotential PUBLIC WITH_MISHMESH)
 endif(TARGET MishMesh)
 
 
