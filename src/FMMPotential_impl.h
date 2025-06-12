@@ -17,8 +17,8 @@ namespace FMMPotential {
 	class FMMPotential::impl {
 	public:
 		impl(const Eigen::MatrixX3d &charge_points, const Eigen::VectorXd &charges, double theta, uint P, uint ncrit);
-		impl(const VVertices &vertices, const VTriangles &triangles, const Eigen::VectorXd &charges, double theta = 0.4, uint P = 5, uint ncrit = 64, uint quad_degree = 6);
-		impl(const vector<vector<valarray<double>>> &triangle_points, const Eigen::VectorXd &charges, double theta = 0.4, uint P = 5, uint ncrit = 64, uint quad_degree = 6);
+		impl(const Eigen::MatrixX3d &V, const Eigen::MatrixX3i &F, const Eigen::VectorXd &charges, double theta = 0.4, uint P = 5, uint ncrit = 64, uint quad_degree = 6);
+		impl(const vector<Eigen::Matrix3d> &triangle_points, const Eigen::VectorXd &charges, double theta = 0.4, uint P = 5, uint ncrit = 64, uint quad_degree = 6);
 #ifdef WITH_MISHMESH
 		impl(const MishMesh::TriMesh &mesh, const Eigen::VectorXd &charges, double theta = 0.4, uint P = 5, uint ncrit = 64, uint quad_degree = 6);
 #endif

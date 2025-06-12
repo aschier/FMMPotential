@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <iostream>
 
+#include <Eigen/Eigen>
+
 #ifndef EXAFMM_INDEXED_BODIES
 #define EXAFMM_INDEXED_BODIES
 #endif
@@ -45,8 +47,8 @@ namespace FMMPotential {
 	/**
 	 * Create a FMMPotential object from vectors of vertices, triangles and a valarray with the charges.
 	 * The initial potentials and forces on the given bodies will be calculated and used for evaluation on other particles.
-	 * @param vertices A vector of triangle vertices.
-	 * @param triangles A vector of triangles used for integration.
+	 * @param V A Vx3 vector of triangle vertices.
+	 * @param F A Fx3 vector of triangles used for integration.
 	 * @param charges The total charges of the triangles.
 	 * @param theta Fast Multipole Theta parameter.
 	 * @param P polynomial degree in the Fast Multipole Method.
@@ -55,17 +57,17 @@ namespace FMMPotential {
 	 *        Values 0, 1, 3, 5 will use the next higher degree of exactness and values bigger than 6 are
 	 *        not supported.
 	 */
-	FMMPotential::impl::impl(const VVertices &vertices, const VTriangles &triangles, const Eigen::VectorXd &charges, double theta, uint P, uint ncrit, uint quad_degree) {
+	FMMPotential::impl::impl(const Eigen::MatrixX3d &V, const Eigen::MatrixX3i &F, const Eigen::VectorXd &charges, double theta, uint P, uint ncrit, uint quad_degree) {
 		rule quad_rule = get_quad_rule(quad_degree);
 
-		Eigen::MatrixX3d charge_points(quad_rule.num_points * triangles.size(), 3);
-		Eigen::VectorXd point_charges(quad_rule.num_points * triangles.size());
+		Eigen::MatrixX3d charge_points(quad_rule.num_points * F.rows(), 3);
+		Eigen::VectorXd point_charges(quad_rule.num_points * F.rows());
 		// Split the charge of a triangle into point charges at gauss quadrature points.
 		// TODO: maybe this should be abstracted in some function in quadrature.h
-		for(size_t t_idx = 0; t_idx < triangles.size(); t_idx++) {
-			const valarray<double> &a = vertices[triangles[t_idx][0]];
-			const valarray<double> &b = vertices[triangles[t_idx][1]];
-			const valarray<double> &c = vertices[triangles[t_idx][2]];
+		for(size_t t_idx = 0; t_idx < F.rows(); t_idx++) {
+			const Eigen::Vector3d &a = V.row(F(t_idx, 0));
+			const Eigen::Vector3d &b = V.row(F(t_idx, 1));
+			const Eigen::Vector3d &c = V.row(F(t_idx, 2));
 			for(short i = 0; i < quad_rule.num_points; i++) {
 				for(short j = 0; j < 3; j++) {
 					charge_points(t_idx * quad_rule.num_points + i, j) = quad_rule.points[i][0] * a[j] + quad_rule.points[i][1] * b[j] + (1.0 - (quad_rule.points[i][0] + quad_rule.points[i][1])) * c[j];
@@ -89,7 +91,7 @@ namespace FMMPotential {
 	 *        Values 0, 1, 3, 5 will use the next higher degree of exactness and values bigger than 6 are
 	 *        not supported.
 	 */
-	FMMPotential::impl::impl(const vector<vector<valarray<double>>> &triangle_points, const Eigen::VectorXd &charges, double theta, uint P, uint ncrit, uint quad_degree) {
+	FMMPotential::impl::impl(const vector<Eigen::Matrix3d> &triangle_points, const Eigen::VectorXd &charges, double theta, uint P, uint ncrit, uint quad_degree) {
 		rule quad_rule = get_quad_rule(quad_degree);
 
 		Eigen::MatrixX3d charge_points(quad_rule.num_points * triangle_points.size(), 3);
@@ -97,9 +99,9 @@ namespace FMMPotential {
 		// Split the charge of a triangle into point charges at gauss quadrature points.
 		// TODO: maybe this should be abstracted in some function in quadrature.h
 		for(size_t t_idx = 0; t_idx < triangle_points.size(); t_idx++) {
-			const valarray<double> &a = triangle_points[t_idx][0];
-			const valarray<double> &b = triangle_points[t_idx][1];
-			const valarray<double> &c = triangle_points[t_idx][2];
+			const Eigen::Vector3d &a = triangle_points[t_idx].row(0);
+			const Eigen::Vector3d &b = triangle_points[t_idx].row(1);
+			const Eigen::Vector3d &c = triangle_points[t_idx].row(2);
 			for(short i = 0; i < quad_rule.num_points; i++) {
 				for(short j = 0; j < 3; j++) {
 					charge_points(t_idx * quad_rule.num_points + i, j) = quad_rule.points[i][0] * a[j] + quad_rule.points[i][1] * b[j] + (1.0 - (quad_rule.points[i][0] + quad_rule.points[i][1])) * c[j];
@@ -208,7 +210,7 @@ namespace FMMPotential {
 
 		assert(charge_points.rows() == charges.rows());
 		charge_bodies = exafmm::Bodies(charge_points.rows());
-		for(int i = 0; i < charge_points.rows(); i++) {
+		for(size_t i = 0; i < charge_points.rows(); i++) {
 			exafmm::vec3 X;
 			for(short j = 0; j < 3; j++) { X[j] = charge_points(i, j); };
 			charge_bodies[i] = exafmm::Body{X, charges[i], 0, 0, i};
@@ -221,10 +223,10 @@ namespace FMMPotential {
 	FMMPotential::FMMPotential(const Eigen::MatrixX3d &charge_points, const Eigen::VectorXd &charges, double theta, uint P, uint ncrit){
 		pImpl = std::make_unique<FMMPotential::impl>(charge_points, charges, theta, P, ncrit);
 	}
-	FMMPotential::FMMPotential(const VVertices &vertices, const VTriangles &triangles, const Eigen::VectorXd &charges, double theta, uint P, uint ncrit, uint quad_degree) {
-		pImpl = std::make_unique<FMMPotential::impl>(vertices, triangles, charges, theta, P, ncrit, quad_degree);
+	FMMPotential::FMMPotential(const Eigen::MatrixX3d &V, const Eigen::MatrixX3i &F, const Eigen::VectorXd &charges, double theta, uint P, uint ncrit, uint quad_degree) {
+		pImpl = std::make_unique<FMMPotential::impl>(V, F, charges, theta, P, ncrit, quad_degree);
 	}
-	FMMPotential::FMMPotential(const std::vector<std::vector<std::valarray<double>>>&triangle_points, const Eigen::VectorXd &charges, double theta, uint P, uint ncrit, uint quad_degree) {
+	FMMPotential::FMMPotential(const std::vector<Eigen::Matrix3d> &triangle_points, const Eigen::VectorXd &charges, double theta, uint P, uint ncrit, uint quad_degree) {
 		pImpl = std::make_unique<FMMPotential::impl>(triangle_points, charges, theta, P, ncrit, quad_degree);
 	}
 #ifdef WITH_MISHMESH
