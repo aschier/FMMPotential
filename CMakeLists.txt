@@ -6,9 +6,12 @@ set(CMAKE_RELEASE_POSTFIX -release)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 find_package(OpenMP)
-find_package(Eigen3 3.4.0 REQUIRED)
+find_package(Eigen3 REQUIRED)
+
 find_package(MishMesh)
-find_package(OpenMesh REQUIRED)
+if(TARGET MishMesh)
+	find_package(OpenMesh REQUIRED)
+endif()
 
 if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -19,12 +22,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
 add_library(FMMPotential SHARED src/FMMPotential.cpp src/FMMPotential_impl.h src/quadrature.hpp include/FMMPotential/FMMPotential.h)
 add_library(libFMMPotential STATIC src/FMMPotential.cpp src/FMMPotential_impl.h src/quadrature.hpp include/FMMPotential/FMMPotential.h)
-
-option(OM_STATIC_BUILD "Turn on when using a static OpenMesh libary" ON)
-if(${OM_STATIC_BUILD})
-	target_compile_definitions(FMMPotential PUBLIC -DOM_STATIC_BUILD)
-	target_compile_definitions(libFMMPotential PUBLIC -DOM_STATIC_BUILD)
-endif()
 
 target_include_directories(FMMPotential PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -37,7 +34,8 @@ target_include_directories(libFMMPotential PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 	$<INSTALL_INTERFACE:include>
 )
-target_link_libraries(FMMPotential OpenMeshCore Eigen3::Eigen)
+target_link_libraries(FMMPotential Eigen3::Eigen)
+target_link_libraries(libFMMPotential Eigen3::Eigen)
 
 set(CLANG_LIBOMP "CLANG_LIBOMP-NOTFOUND" CACHE FILEPATH "Path the clang libomp.lib")
 if(${CLANG_LIBOMP})
